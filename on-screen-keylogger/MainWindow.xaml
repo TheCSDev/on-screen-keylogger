@@ -1,0 +1,29 @@
+﻿<Window x:Class="on_screen_keylogger.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:on_screen_keylogger"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        mc:Ignorable="d"
+        Title="On-Screen Keylogger"
+        Width="790" Height="265"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True"
+        ResizeMode="CanResize"
+        WindowStyle="SingleBorderWindow"
+        Closing="Window_Closing">
+    <Grid x:Name="contentPane" Background="#FFF1F1F1">
+        <WebBrowser x:Name="webBrowser"
+                    Focusable="False"
+                    IsEnabled="False"
+                    Source="https://www.example.com"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    Navigating="webBrowser_Navigating"/>
+        <!--hmm, perhaps working with WebView2 will be better and easier...-->
+        <!--<wv2:WebView2 x:Name="webBrowser"
+                      Source="https://www.example.com"
+                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>-->
+        <!--edit: NOPE, nooooope nope nope nope nope, heel naw, no way-->
+    </Grid>
+</Window>
