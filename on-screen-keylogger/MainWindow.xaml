@@ -7,23 +7,18 @@
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         mc:Ignorable="d"
         Title="On-Screen Keylogger"
-        Width="790" Height="265"
+        Width="632" Height="240"
         WindowStartupLocation="CenterScreen"
         Topmost="True"
         ResizeMode="CanResize"
         WindowStyle="SingleBorderWindow"
         Closing="Window_Closing">
-    <Grid x:Name="contentPane" Background="#FFF1F1F1">
-        <WebBrowser x:Name="webBrowser"
-                    Focusable="False"
-                    IsEnabled="False"
-                    Source="https://www.example.com"
-                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                    Navigating="webBrowser_Navigating"/>
-        <!--hmm, perhaps working with WebView2 will be better and easier...-->
-        <!--<wv2:WebView2 x:Name="webBrowser"
+    <Grid x:Name="contentPane" Background="#FF323232">
+        <wv2:WebView2 x:Name="webBrowser"
                       Source="https://www.example.com"
-                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>-->
-        <!--edit: NOPE, nooooope nope nope nope nope, heel naw, no way-->
+                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                      NavigationStarting="webBrowser_NavigationStarting"
+                      NavigationCompleted="webBrowser_NavigationCompleted"
+                      CoreWebView2InitializationCompleted="webBrowser_CoreWebView2InitializationCompleted"/>
     </Grid>
 </Window>

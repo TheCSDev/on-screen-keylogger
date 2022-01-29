@@ -34,5 +34,17 @@ namespace on_screen_keylogger.Properties {
                 this["UILayoutName"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("50")]
+        public int UpdateTimeMS {
+            get {
+                return ((int)(this["UpdateTimeMS"]));
+            }
+            set {
+                this["UpdateTimeMS"] = value;
+            }
+        }
     }
 }

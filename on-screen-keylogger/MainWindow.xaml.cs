@@ -1,13 +1,11 @@
-﻿using mshtml;
-using System;
+﻿using System;
 using System.IO;
-using System.Linq;
 using System.Windows;
-using System.Diagnostics;
-using System.Configuration;
-using System.Windows.Controls;
+using System.Threading.Tasks;
+using Microsoft.Web.WebView2.Core;
 using on_screen_keylogger.Input;
-using on_screen_keylogger.Tasks;
+using on_screen_keylogger.UpdateCallers;
+using System.Collections.Generic;
 
 namespace on_screen_keylogger
 {
@@ -19,43 +17,40 @@ namespace on_screen_keylogger
         //========================================================
         protected InputHandler _inputHandler;
         //
-        private readonly UpdaterTask _updaterTask;
+        private readonly UpdateCaller _updateCaller;
+        private readonly HashSet<string> _loadedKeyCodes = new HashSet<string>();
         //--------------------------------------------------------
         /// <summary>
         /// The <see cref="InputHandler"/> used by this window.<br/>
         /// Override this to define your own <see cref="InputHandler"/>.
         /// </summary>
         public InputHandler InptHandler => _inputHandler ??= new DefaultInputHandler();
-
+        
         /// <summary>
-        /// Returns the <see cref="UpdaterTask"/> used by this window.
+        /// Returns the <see cref="UpdateCaller"/> used by this window.
         /// </summary>
-        public UpdaterTask UpdaterTask => _updaterTask;
+        public UpdateCaller UpdateCaller => _updateCaller;
 
         /// <summary>
         /// The currently selected UI layout name.
         /// </summary>
-        public string UILayoutName
+        public string HtmlUILayoutName
         {
-            get => ConfigurationManager.AppSettings["UILayoutName"];
-            set
-            {
-                SetAppSetting("UILayoutName", value);
-                LoadUILayout(value);
-            }
+            get => this[Const.Setting_UILayoutName].ToString() ?? "default";
+            set { this[Const.Setting_UILayoutName] = value; LoadHtmlLayout(); }
         }
         //========================================================
         public MainWindow()
         {
             //init ui
             InitializeComponent();
-            LoadUILayout();
+            LoadHtmlLayout();
 
             //define the task
-            _updaterTask = new DefaultUpdaterTask(this);
+            _updateCaller = new DefaultUpdateCaller(this);
 
             //update ui
-            UpdateUI();
+            UpdateHtmlUI();
         }
         //--------------------------------------------------------
         /// <summary>
@@ -65,9 +60,9 @@ namespace on_screen_keylogger
         /// True if the layout got loaded, and false if something
         /// went wrong while loading.
         /// </returns>
-        public bool LoadUILayout(string layoutName = null)
+        public bool LoadHtmlLayout(string layoutName = null)
         {
-            layoutName ??= UILayoutName;
+            layoutName ??= HtmlUILayoutName;
             try
             {
                 string path = string.Format("./layouts/{0}/layout.html", layoutName);
@@ -82,55 +77,114 @@ namespace on_screen_keylogger
         /// <summary>
         /// Updates all of the UI elements, their texts, and colors.
         /// </summary>
-        public void UpdateUI()
+        public void UpdateHtmlUI()
         {
-            Dispatcher.Invoke(() =>
+            Dispatcher.InvokeAsync(async () =>
             {
-                if (!webBrowser.IsLoaded || IsFocused) return;
-                //get html document
-                HTMLDocument document = webBrowser.Document as HTMLDocument;
-                if(document == null) return;
+                //load and focus check
+                if (!webBrowser.IsLoaded || webBrowser.CoreWebView2 == null || IsFocused) return;
+                
+                //----- update html
+                //update counters
+                await ExecJS_ForEachQueryAsync(
+                    "[id="+Const.Id_HzCounter+"]",
+                    "i.innerHTML = '" + UpdateCaller.UpdateFrequency + "'");
 
-                //update html
-                foreach (IHTMLElement element in document.getElementsByTagName("*"))
-                    try
+                //update keycodes
+                foreach(string keyCode in _loadedKeyCodes)
+                {
+                    //check if pressed and define className based on pressed
+                    bool pressed = InptHandler.IsKeyDown(keyCode);
+                    string className = pressed ? Const.Class_PrsKey : Const.Class_RelKey;
+
+                    //iterate all elements with the keyCode=keyCode attribute,
+                    //and add the appropriate class to it, and remve opposite class
+                    string query = "[{$attrKeyCode}={$keyCode}]"
+                        .Replace("{$attrKeyCode}", Const.Attr_KeyCode)
+                        .Replace("{$keyCode}", keyCode);
+
+                    //'var removed' is used to prevent the release event from being
+                    //called right at the start during the first update
+                    string js =
+                    ("var removed = false;" +
+                    "if(i.classList.contains('{$a}')) { i.classList.remove('{$a}'); removed = true; }" +
+                    "if(!i.classList.contains('{$b}'))" +
+                    "{" +
+                    "    i.classList.add('{$b}');" +
+                    "    if(i.hasAttribute('{$c}') && removed)" +
+                    "        setTimeout(() => eval(i.getAttribute('{$c}')), 0);" +
+                    "}");
+
+                    if (pressed)
                     {
-                        //update frequency counter
-                        if (element.id?.Contains("updateFrequencyCounter") ?? false)
-                            element.innerHTML = UpdaterTask.UpdateFrequency.ToString();
-
-                        //update tag based on key press
-                        string keyCode = Convert.ToString(element.getAttribute("keyCode"));
-                        if (!string.IsNullOrEmpty(keyCode))
-                        {
-                            bool pressed = InptHandler.IsKeyDown(keyCode);
-                            if (pressed && !("" + element.className).Contains("pressedKey"))
-                            {
-                                string className = element.className + " pressedKey";
-                                className = className.Replace("releasedKey", "").Trim();
-                                element.className = className;
-                            }
-                            else if(!pressed && !("" + element.className).Contains("releasedKey"))
-                            {
-                                string className = element.className + " releasedKey";
-                                className = className.Replace("pressedKey", "").Trim();
-                                element.className = className;
-                            }
-                        }
+                        js = js.Replace("{$a}", Const.Class_RelKey).Replace("{$b}", Const.Class_PrsKey)
+                            .Replace("{$c}", Const.Attr_OnPressed);
                     }
-                    catch { }
+                    else
+                    {
+                        js = js.Replace("{$b}", Const.Class_RelKey).Replace("{$a}", Const.Class_PrsKey)
+                            .Replace("{$c}", Const.Attr_OnReleased);
+                    }
+
+                    await ExecJS_ForEachQueryAsync(query, js);
+                }
             });
         }
         //--------------------------------------------------------
         /// <summary>
-        /// A protected call for <see cref="WebBrowser.InvokeScript(string, object[])"/>
-        /// that is safe from thrown exceptions.
+        /// Retrieves the set of keyCode-s used by the currently
+        /// loaded webpage in the <see cref="webBrowser"/>.<br/>
+        /// Please note that this method waits for async tasks and may pause the thread.
         /// </summary>
-        public bool PCallJS(string funcName, params object[] args)
+        private async Task UpdateKeyCodesAsync()
         {
-            try { webBrowser.InvokeScript(funcName, args); return true; }
-            catch { return false; }
+            //clear old stuff
+            Console.WriteLine("[UpdateKeyCodesAsync] Clearing old keyCodes");
+            _loadedKeyCodes.Clear();
+            
+            //wait and hope it will load by then cuz webBrowser.IsLoaded
+            //is lying most of the time for some reason
+            while (webBrowser.CoreWebView2 == null || !webBrowser.IsLoaded)
+                await Task.Delay(100);
+            await Task.Delay(300);
+
+            string js =
+            "(function(){\n" +
+            "    var arr = [];\n" +
+            "    document.querySelectorAll('["+Const.Attr_KeyCode+"]')" +
+            ".forEach(i => arr.push(i.getAttribute('"+Const.Attr_KeyCode+"')));\n" +
+            "    return arr.join(',')\n" +
+            "})();";
+
+            Task task = ExecJSAsync(js).ContinueWith((arg) =>
+            {
+                //gotta love the fast that JS adds quotes at the start and end /j
+                string result = arg.Result.Replace("\"", "");
+                Console.WriteLine("[UpdateKeyCodesAsync] Registering new keyCodes: " + result);
+                _loadedKeyCodes.Clear();
+                _loadedKeyCodes.UnionWith(result.Split(','));
+            });
+
+            await task;
         }
+        //--------------------------------------------------------
+        /// <summary>
+        /// Executes JS on the <see cref="webBrowser"/>.
+        /// </summary>
+        /// <exception cref="NullReferenceException">
+        /// When the <see cref="webBrowser"/>'s CoreWebView2 is null.
+        /// </exception>
+        public Task<string> ExecJSAsync(string js) =>
+            webBrowser.CoreWebView2.ExecuteScriptAsync(js);
+        //
+        /// <summary>
+        /// Executes the script:<br/>
+        /// <b>document.querySelectorAll("selector").forEach(i => { iAction });</b><br/>
+        /// on the <see cref="webBrowser"/>.
+        /// </summary>
+        public Task<string> ExecJS_ForEachQueryAsync(string selector, string iAction) =>
+            ExecJSAsync("document.querySelectorAll(\"" + selector + "\")" +
+                ".forEach(i => { " + iAction + " });");
         //========================================================
         /// <summary>
         /// This menu item closes the window when clicked.
@@ -138,45 +192,69 @@ namespace on_screen_keylogger
         private void mf_exit_Click(object sender, RoutedEventArgs e) => Close();
         //--------------------------------------------------------
         /// <summary>
-        /// Aborts the updater thread upon closing.
+        /// Aborts the updater thread upon closing, and clears all data.
         /// </summary>
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) =>
-            UpdaterTask?.Dispose();
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            //dispose and clear stuff
+            UpdateCaller?.Dispose();
+            webBrowser?.CoreWebView2?.CookieManager?.DeleteAllCookies();
+
+            //save properties
+            Properties.Settings.Default.Save();
+        }
         //--------------------------------------------------------
         /// <summary>
-        /// And this one is just... stupid (in terms of performance).
-        /// This method prevents using backspace to go back cuz apparently
-        /// you cannot disable navigation for WebBrowser-s.
+        /// Updates <see cref="_loadedKeyCodes"/>.
         /// </summary>
-        private void webBrowser_Navigating(object sender, System.Windows.Navigation.NavigatingCancelEventArgs e)
+        private async void webBrowser_NavigationCompleted
+        (object sender, CoreWebView2NavigationCompletedEventArgs e)
+            => await UpdateKeyCodesAsync();
+        //--------------------------------------------------------
+        /// <summary>
+        /// For security reasons, deny all navigations to websites.
+        /// One security example is having a local UI layout file
+        /// suddenly redirect the browser to a malicious website.
+        /// Stuff like that must not happen.
+        /// </summary>
+        private void webBrowser_NavigationStarting
+        (object sender, CoreWebView2NavigationStartingEventArgs e) =>
+            e.Cancel = !new Uri(e.Uri).IsFile;
+        //--------------------------------------------------------
+        /// <summary>
+        /// Define CoreWebView2 settings.
+        /// </summary>
+        private void webBrowser_CoreWebView2InitializationCompleted
+        (object sender, CoreWebView2InitializationCompletedEventArgs e)
         {
-            StackTrace st = new StackTrace();
-            if (!st.GetFrames().Any(i => i.GetMethod().Name.Equals(nameof(LoadUILayout))))
-                e.Cancel = true;
+            webBrowser.CoreWebView2.Settings.IsPasswordAutosaveEnabled = false;
+            webBrowser.CoreWebView2.Settings.IsGeneralAutofillEnabled = false;
         }
         //========================================================
         /// <summary>
-        /// (Copy/Paste)d from:<br/>
-        /// https://stackoverflow.com/questions/5274829/configurationmanager-appsettings-how-to-modify-and-save
+        /// Gets or sets the application's user settings.
         /// </summary>
-        public static bool SetAppSetting(string key, string value)
+        /// <param name="setting">The name of the setting.</param>
+        public object this[string setting]
         {
-            try
-            {
-                var configFile = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                var settings = configFile.AppSettings.Settings;
-                if (settings[key] == null) { settings.Add(key, value); }
-                else { settings[key].Value = value; }
-                configFile.Save(ConfigurationSaveMode.Modified);
-                ConfigurationManager.RefreshSection(configFile.AppSettings.SectionInformation.Name);
-                return true;
-            }
-            catch (ConfigurationErrorsException)
-            {
-                Console.WriteLine("Error writing app settings");
-                return false;
-            }
+            get => GetSetting(setting);
+            set => SetSetting(setting, value);
         }
+        //--------------------------------------------------------
+        public static T GetSetting<T>(string setting)
+        {
+            try { return (T)Properties.Settings.Default[setting]; }
+            catch { return default; }
+        }
+        //
+        public static object GetSetting(string setting)
+        {
+            try { return Properties.Settings.Default[setting]; }
+            catch { return null; }
+        }
+        //--------------------------------------------------------
+        public static void SetSetting(string setting, object value) =>
+            Properties.Settings.Default[setting] = value;
         //========================================================
     }
 }
