@@ -99,7 +99,7 @@ namespace on_screen_keylogger
 
                     //iterate all elements with the keyCode=keyCode attribute,
                     //and add the appropriate class to it, and remve opposite class
-                    string query = "[{$attrKeyCode}={$keyCode}]"
+                    string query = "[{$attrKeyCode}='{$keyCode}']"
                         .Replace("{$attrKeyCode}", Const.Attr_KeyCode)
                         .Replace("{$keyCode}", keyCode);
 
