@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace on_screen_keylogger.Handlers
@@ -36,7 +37,7 @@ namespace on_screen_keylogger.Handlers
                     if (message.ToLower().Equals("default"))
                         Parent.webBrowser.NavigateToString(Properties.Resources.layout_default);
                     else if (message.ToLower().Equals("settings"))
-                        Parent.webBrowser.NavigateToString(Properties.Resources.layout_settings);
+                        LoadSettingsLayout();
                     else
                         Parent.LoadHtmlLayout(message);
                 }
@@ -68,6 +69,26 @@ namespace on_screen_keylogger.Handlers
                     }
                 }
             });
+        }
+        //--------------------------------------------------------
+        private void LoadSettingsLayout()
+        {
+            //prepend settings data
+            string uil = Parent.HtmlUILayoutName;
+            int utms = Parent.UpdateCaller.UpdateTime;
+
+            string html =
+                "<!DOCTYPE html>\n" +
+                "<script>" +
+                "OnScreenKeylogger = {};" +
+                "OnScreenKeylogger.Settings = {};" +
+                "OnScreenKeylogger.Settings.UILayoutName = '"+uil+"';" +
+                "OnScreenKeylogger.Settings.UpdateTimeMS = "+utms+";" +
+                "</script>" +
+                Properties.Resources.layout_settings;
+
+            //load page
+            Parent.webBrowser.NavigateToString(html);
         }
         //========================================================
     }

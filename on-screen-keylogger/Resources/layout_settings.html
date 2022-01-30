@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!--<!DOCTYPE html> Do not uncomment this, it is assigned automatically. -->
 <html>
 <head>
     <style>
@@ -48,6 +48,8 @@
             EnableApply(false);
         }
 
+        function Okay() { UpdateAll(); GoBack(); }
+
         function EnableApply(value)
         {
             if (value == false) document.getElementById('btn_aply')?.setAttribute("disabled", "");
@@ -71,14 +73,17 @@
     </br>
     <fieldset>
         <legend>Apply changes</legend>
+        <button id="btn_okay" onclick="Okay();">Okay</button>
         <button id="btn_aply" onclick="UpdateAll();" disabled>Apply</button>
         <button id="btn_back" onclick="GoBack();">Go back / Cancel</button>
     </fieldset>
 
     <script defer>
+        document.getElementById('in_ctn').value = OnScreenKeylogger.Settings.UILayoutName;
         document.getElementById('in_ctn').addEventListener('input', () => EnableApply(true));
         document.getElementById('in_ctn').addEventListener('propertychange', () => EnableApply(true));
 
+        document.getElementById('in_tpu').value = OnScreenKeylogger.Settings.UpdateTimeMS;
         document.getElementById('in_tpu').addEventListener('input', () => EnableApply(true));
         document.getElementById('in_tpu').addEventListener('propertychange', () => EnableApply(true));
     </script>
