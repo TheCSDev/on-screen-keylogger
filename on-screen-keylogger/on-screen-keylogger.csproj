@@ -82,6 +82,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Const.cs" />
+    <Compile Include="Handlers\DefaultWebMessageHandler.cs" />
+    <Compile Include="Handlers\WebMessageHandler.cs" />
     <Compile Include="UpdateCallers\DefaultUpdateCaller.cs" />
     <Compile Include="UpdateCallers\UpdateCaller.cs" />
     <Page Include="MainWindow.xaml">
@@ -128,6 +130,12 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\layout-default.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\layout_settings.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Microsoft.Web.WebView2.1.0.1072.54\build\Microsoft.Web.WebView2.targets" Condition="Exists('..\packages\Microsoft.Web.WebView2.1.0.1072.54\build\Microsoft.Web.WebView2.targets')" />

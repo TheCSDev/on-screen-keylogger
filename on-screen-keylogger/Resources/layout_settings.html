@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        html {
+            background-color: #333333;
+        }
+
+        body {
+            color: #cccccc;
+        }
+
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 12px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:disabled, button[disabled] {
+            background-color: #a6a6a6;
+        }
+    </style>
+</head>
+<body>
+    <script defer>
+        const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+
+        function GoBack() { chrome?.webview?.postMessage("OnScreenKeylogger: Reload"); }
+
+        function UpdateAll()
+        {
+            var ctn = document.getElementById('in_ctn').value ?? 'default';
+            var tpu = document.getElementById('in_tpu').value ?? 'default';
+            tpu = clamp(tpu, 25, 250);
+            try { document.getElementById('in_tpu').value = tpu; } catch { }
+
+            chrome?.webview?.postMessage("OnScreenKeylogger: set UILayoutName " + ctn);
+            chrome?.webview?.postMessage("OnScreenKeylogger: set UpdateTimeMS " + tpu);
+
+            EnableApply(false);
+        }
+
+        function EnableApply(value)
+        {
+            if (value == false) document.getElementById('btn_aply')?.setAttribute("disabled", "");
+            else if (value == true) document.getElementById('btn_aply')?.removeAttribute("disabled");
+        }
+    </script>
+
+    <fieldset>
+        <legend>Settings</legend>
+        <table>
+            <tr>
+                <td>Custom theme name:</td>
+                <td><input id="in_ctn" type="text" value="default"></input></td>
+            </tr>
+            <tr>
+                <td>Time per update (ms):</td>
+                <td><input id="in_tpu" type="number" min=25 max=250 value=50></input></td>
+            </tr>
+        </table>
+    </fieldset>
+    </br>
+    <fieldset>
+        <legend>Apply changes</legend>
+        <button id="btn_aply" onclick="UpdateAll();" disabled>Apply</button>
+        <button id="btn_back" onclick="GoBack();">Go back / Cancel</button>
+    </fieldset>
+
+    <script defer>
+        document.getElementById('in_ctn').addEventListener('input', () => EnableApply(true));
+        document.getElementById('in_ctn').addEventListener('propertychange', () => EnableApply(true));
+
+        document.getElementById('in_tpu').addEventListener('input', () => EnableApply(true));
+        document.getElementById('in_tpu').addEventListener('propertychange', () => EnableApply(true));
+    </script>
+</body>
+</html>

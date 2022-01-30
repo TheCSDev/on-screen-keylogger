@@ -12,13 +12,15 @@
         Topmost="True"
         ResizeMode="CanResize"
         WindowStyle="SingleBorderWindow"
-        Closing="Window_Closing">
+        Closing="Window_Closing"
+        Keyboard.KeyUp="Window_KeyUp">
     <Grid x:Name="contentPane" Background="#FF323232">
         <wv2:WebView2 x:Name="webBrowser"
                       Source="https://www.example.com"
                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                       NavigationStarting="webBrowser_NavigationStarting"
                       NavigationCompleted="webBrowser_NavigationCompleted"
-                      CoreWebView2InitializationCompleted="webBrowser_CoreWebView2InitializationCompleted"/>
+                      CoreWebView2InitializationCompleted="webBrowser_CoreWebView2InitializationCompleted"
+                      WebMessageReceived="webBrowser_WebMessageReceived"/>
     </Grid>
 </Window>

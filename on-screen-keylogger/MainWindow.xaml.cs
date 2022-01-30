@@ -1,11 +1,13 @@
 ﻿using System;
 using System.IO;
 using System.Windows;
+using System.Windows.Input;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Microsoft.Web.WebView2.Core;
 using on_screen_keylogger.Input;
+using on_screen_keylogger.Handlers;
 using on_screen_keylogger.UpdateCallers;
-using System.Collections.Generic;
 
 namespace on_screen_keylogger
 {
@@ -15,22 +17,28 @@ namespace on_screen_keylogger
     public partial class MainWindow : Window
     {
         //========================================================
-        protected InputHandler _inputHandler;
-        //
-        private readonly UpdateCaller _updateCaller;
         private readonly HashSet<string> _loadedKeyCodes = new HashSet<string>();
+        //
+        private InputHandler _inputHandler;
+        private UpdateCaller _updateCaller;
+        private WebMessageHandler _webMessageHandler;
         //--------------------------------------------------------
         /// <summary>
         /// The <see cref="InputHandler"/> used by this window.<br/>
         /// Override this to define your own <see cref="InputHandler"/>.
         /// </summary>
-        public InputHandler InptHandler => _inputHandler ??= new DefaultInputHandler();
+        public InputHandler InptHandler => _inputHandler;
         
         /// <summary>
         /// Returns the <see cref="UpdateCaller"/> used by this window.
         /// </summary>
         public UpdateCaller UpdateCaller => _updateCaller;
 
+        /// <summary>
+        /// Handles web messages.
+        /// </summary>
+        public WebMessageHandler WebMessageHandler => _webMessageHandler;
+        //--------------------------------------------------------
         /// <summary>
         /// The currently selected UI layout name.
         /// </summary>
@@ -39,15 +47,29 @@ namespace on_screen_keylogger
             get => this[Const.Setting_UILayoutName].ToString() ?? "default";
             set { this[Const.Setting_UILayoutName] = value; LoadHtmlLayout(); }
         }
+
+        /// <summary>
+        /// The URI that has been last loaded by the <see cref="webBrowser"/>.
+        /// </summary>
+        public string LastLoadedURI { get; private set; } = "";
+
+        /// <summary>
+        /// Internal layouts are layouts loaded from a string (data:text/html;).
+        /// </summary>
+        public bool IsCurrLayoutInternal => LastLoadedURI.StartsWith("data:text/html;");
         //========================================================
         public MainWindow()
         {
             //init ui
             InitializeComponent();
-            LoadHtmlLayout();
-
-            //define the task
+            
+			//define variables
+            _inputHandler = new DefaultInputHandler();
             _updateCaller = new DefaultUpdateCaller(this);
+            _webMessageHandler = new DefaultWebMessageHandler(this);
+			
+			//load layout
+			WebMessageHandler.Handle(Const.WebMsg_LoadLayout + " default");
 
             //update ui
             UpdateHtmlUI();
@@ -187,11 +209,6 @@ namespace on_screen_keylogger
                 ".forEach(i => { " + iAction + " });");
         //========================================================
         /// <summary>
-        /// This menu item closes the window when clicked.
-        /// </summary>
-        private void mf_exit_Click(object sender, RoutedEventArgs e) => Close();
-        //--------------------------------------------------------
-        /// <summary>
         /// Aborts the updater thread upon closing, and clears all data.
         /// </summary>
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -202,6 +219,17 @@ namespace on_screen_keylogger
 
             //save properties
             Properties.Settings.Default.Save();
+        }
+        //--------------------------------------------------------
+        /// <summary>
+        /// Settings and help
+        /// </summary>
+        private void Window_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.F1)
+                System.Diagnostics.Process.Start("https://github.com/TheCSDev/on-screen-keylogger/wiki");
+            else if (e.Key == Key.OemComma && Keyboard.IsKeyDown(Key.LeftCtrl))
+                WebMessageHandler.Handle(Const.WebMsg_LoadLayout + " Settings");
         }
         //--------------------------------------------------------
         /// <summary>
@@ -218,8 +246,15 @@ namespace on_screen_keylogger
         /// Stuff like that must not happen.
         /// </summary>
         private void webBrowser_NavigationStarting
-        (object sender, CoreWebView2NavigationStartingEventArgs e) =>
-            e.Cancel = !new Uri(e.Uri).IsFile;
+        (object sender, CoreWebView2NavigationStartingEventArgs e)
+        {
+            //store the last loaded url (except data ones, avoid too much RAM usage)
+            if (e.Uri.StartsWith("data:text/html;")) LastLoadedURI = "data:text/html;";
+            else LastLoadedURI = e.Uri;
+
+            //cancel if not file or data url
+            e.Cancel = !new Uri(e.Uri).IsFile && !IsCurrLayoutInternal;
+        }
         //--------------------------------------------------------
         /// <summary>
         /// Define CoreWebView2 settings.
@@ -229,6 +264,20 @@ namespace on_screen_keylogger
         {
             webBrowser.CoreWebView2.Settings.IsPasswordAutosaveEnabled = false;
             webBrowser.CoreWebView2.Settings.IsGeneralAutofillEnabled = false;
+        }
+        //--------------------------------------------------------
+        /// <summary>
+        /// Handles web messages.
+        /// </summary>
+        private void webBrowser_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            //get message, make sure it has the prefix
+            string message = e.TryGetWebMessageAsString();
+            if (!message.ToLower().StartsWith(Const.WebMessagePrefix)) return;
+            message = message.Substring(Const.WebMessagePrefix.Length);
+            
+            //handle the message
+            WebMessageHandler.Handle(message);
         }
         //========================================================
         /// <summary>

@@ -26,6 +26,17 @@ namespace on_screen_keylogger
         }
         //--------------------------------------------------------
         /// <summary>
+        /// The prefix that must be used by web messages in order
+        /// for them to be processed.
+        /// </summary>
+        public static string WebMessagePrefix => "OnScreenKeylogger: ".ToLower();
+
+        public static string WebMsg_LoadLayout => "LoadLayout".ToLower();
+        public static string WebMsg_Reload => "reload".ToLower();
+        public static string WebMsg_GoBack => "GoBack".ToLower();
+        public static string WebMsg_Set => "set".ToLower();
+        //--------------------------------------------------------
+        /// <summary>
         /// This <see cref="Properties.Settings"/> setting tells the
         /// application what HTML file to use as the UI layout.
         /// </summary>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="stylesheet" href="style.css">
+		<script src="script.js" defer></script>
+	</head>
+
+	<body>
+		<style>
+			html, body
+			{
+				width: 100%;
+				height: 100%;
+				margin: 0;
+				
+				overflow: hidden;
+				background-color: black;
+				color: white;
+			}
+
+			button
+			{
+				background-color: #333333;
+				border: 1px;
+				border-color: black;
+				border-style: solid;
+				color: white;
+				font-size: 10px;
+				
+				user-select: none;
+				position: relative;
+				width: 33px;
+				height: 36px;
+				margin: 0px;
+				margin-left: -2px;
+				margin-right: -2px;
+				padding: 0px;
+			}
+
+            button[highlight]
+			{
+                background-color: #555555;
+            }
+
+			.pressedKey
+			{
+				background-color: #0099bb;
+			}
+
+			.releasedKey
+			{
+				
+			}
+		</style>
+		<div id="keyboard" style="width: fit-content; height: fit-content; transform-origin: top left; padding: 3px;">
+			<button keyCode="escape">Esc</button>
+			<button keyCode="192" shift="~">`</button>
+			<button keyCode="d1" shift="!">1</button>
+			<button keyCode="d2" shift="@">2</button>
+			<button keyCode="d3" shift="#">3</button>
+			<button keyCode="d4" shift="$">4</button>
+			<button keyCode="d5" shift="%">5</button>
+			<button keyCode="d6" shift="^">6</button>
+			<button keyCode="d7" shift="&">7</button>
+			<button keyCode="d8" shift="*">8</button>
+			<button keyCode="d9" shift="(">9</button>
+			<button keyCode="d0" shift=")">0</button>
+			<button keyCode="189" shift="_">-</button>
+			<button keyCode="187" shift="+">=</button>
+			<button keyCode="8" w=93>←</button>
+			</br>
+			<button keyCode="tab" w=51>Tab</button>
+			<button keyCode="q">Q</button>
+			<button keyCode="w">W</button>
+			<button keyCode="e">E</button>
+			<button keyCode="r">R</button>
+			<button keyCode="t">T</button>
+			<button keyCode="y">Y</button>
+			<button keyCode="u">U</button>
+			<button keyCode="i">I</button>
+			<button keyCode="o">O</button>
+			<button keyCode="p">P</button>
+			<button keyCode="219" shift="{">[</button>
+			<button keyCode="221" shift="}">]</button>
+			<button keyCode="0" w=108 style="color: #777777;">&nbsp;<txt id="updateFrequencyCounter">--</txt> Hz</button>
+			</br>
+			<button keyCode="20" w=69>Caps</button>
+			<button keyCode="a">A</button>
+			<button keyCode="s">S</button>
+			<button keyCode="d">D</button>
+			<button keyCode="f">F</button>
+			<button keyCode="g">G</button>
+			<button keyCode="h">H</button>
+			<button keyCode="j">J</button>
+			<button keyCode="k">K</button>
+			<button keyCode="l">L</button>
+			<button keyCode="186" shift=":">;</button>
+			<button keyCode="222" shift="&quot;">'</button>
+			<button keyCode="220" shift="|">\</button>
+			<button keyCode="13" w=90>Enter</button>
+			</br>
+			<button keyCode="16" w=54>Shift</button>
+			<button keyCode="226">\</button>
+			<button keyCode="z">Z</button>
+			<button keyCode="x">X</button>
+			<button keyCode="c">C</button>
+			<button keyCode="v">V</button>
+			<button keyCode="b">B</button>
+			<button keyCode="n">N</button>
+			<button keyCode="m">M</button>
+			<button keyCode="188" shift="&lt;">,</button>
+			<button keyCode="190" shift="&gt;">.</button>
+			<button keyCode="191" shift="?">/</button>
+			<button keyCode="38">↑</button>
+			<button keyCode="16" w=105>Shift</button>
+			</br>
+			<button keyCode="" onclick="openSettings()" onreleased="openSettings()" highlight>⚙</button>
+			<button keyCode="17">Ctrl</button>
+			<button keyCode="91">Win</button>
+			<button keyCode="18">Alt</button>
+			<button keyCode="32" w=186>Space</button>
+			<button keyCode="18">Alt</button>
+			<button keyCode="17">Ctrl</button>
+			<button keyCode="37">←</button>
+			<button keyCode="40">↓</button>
+			<button keyCode="39">→</button>
+			<button keyCode="93" w=72>Ctx</button>
+			</br>
+			<center hidden>
+				<button keyCode="1" w=70>LMB</button>
+				<button keyCode="4" w=70>MMB</button>
+				<button keyCode="2" w=70>RMB</button>
+			</center>
+		</div>
+		<script defer>
+			//Sets the width of all elements with the 'w' attribute
+			document.querySelectorAll("[w]").forEach((i) => { i.style.width = i.getAttribute("w") + "px"; });
+
+			//Sets the "subtext" of each button with the 'shift' attribute
+			document.querySelectorAll("button[keyCode][shift]").forEach(i =>
+			{
+				var shift = i.getAttribute("shift");
+				var txt = document.createElement("txt");
+				txt.innerHTML = shift;
+				txt.style = "position: absolute; bottom: 10%; right: 10%; font-size: 60%; opacity: 0.3;";
+				i.appendChild(txt);
+			});
+
+			//disable tab focus on buttons
+			document.querySelectorAll("button[keyCode]").forEach(i => i.setAttribute("tabindex", -1));
+
+			//handle window re-sizing
+			function reScaleKeyboard()
+			{
+				var keyboard = document.getElementById("keyboard");
+				var scaleX = (window.innerWidth / keyboard.clientWidth);
+				var scaleY = (window.innerHeight / keyboard.clientHeight);
+				var scale = "scale("+scaleX+", "+scaleY+")";
+				
+				keyboard.style.transform = scale;
+			}
+			window.addEventListener('resize', event => reScaleKeyboard(event), true);
+			setTimeout(reScaleKeyboard, 50);
+
+            //handle opening settings
+            function openSettings()
+            {
+                chrome?.webview?.postMessage("OnScreenKeylogger: LoadLayout Settings");
+            }
+		</script>
+	</body>
+</html>
