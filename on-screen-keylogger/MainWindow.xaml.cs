@@ -69,7 +69,7 @@ namespace on_screen_keylogger
             _webMessageHandler = new DefaultWebMessageHandler(this);
 			
 			//load layout
-			WebMessageHandler.Handle(Const.WebMsg_LoadLayout + " default");
+			WebMessageHandler.Handle(Const.WebMsg_LoadLayout + " " + HtmlUILayoutName);
 
             //update ui
             UpdateHtmlUI();
