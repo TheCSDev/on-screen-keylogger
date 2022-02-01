@@ -46,6 +46,14 @@ namespace on_screen_keylogger.Handlers
                 else if (message.ToLower().StartsWith(Const.WebMsg_Reload))
                     Parent.LoadHtmlLayout(); //re-loads layout
 
+                //pressKey
+                else if (message.ToLower().StartsWith(Const.WebMsg_PressKey + " "))
+                {
+                    message = message.Substring(Const.WebMsg_PressKey.Length + 1);
+                    int? keyCode = Parent.InptHandler.ParseKeyCode(message);
+                    Parent.InptHandler.OSK_KeyPress(keyCode ?? 0);
+                }
+
                 //set (for security reasons, internal layouts only)
                 else if (message.ToLower().StartsWith(Const.WebMsg_Set + " ") &&
                         Parent.IsCurrLayoutInternal)

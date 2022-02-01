@@ -1,8 +1,6 @@
-﻿using System;
-using System.Windows.Forms;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
-namespace on_screen_keylogger.Input
+namespace on_screen_keylogger.Handlers
 {
     /// <summary>
     /// The default built-in <see cref="InputHandler"/>.
@@ -17,25 +15,14 @@ namespace on_screen_keylogger.Input
         [DllImport("user32.dll")]
         public static extern short GetKeyState(int keyCode);
         //========================================================
+        public DefaultInputHandler(MainWindow parent) : base(parent) { }
+        //========================================================
         /// <summary>
         /// This overriden method uses <see cref="GetKeyState(int)"/>
         /// from User32.dll to check if a key is down.
         /// </summary>
-        public override bool IsKeyDown(string key)
-        {
-            //get keyCode
-            int keyCode;
-            if (!int.TryParse(key, out keyCode)) //try int
-            {
-                Keys keyEnum;
-                if(!Enum.TryParse(key, true, out keyEnum)) //then try keys enum
-                    return false;
-                keyCode = (int)keyEnum;
-            }
-
-            //return
-            return (GetKeyState(keyCode) & 0x8000) != 0;
-        }
+        public override bool IsKeyDown(string key) =>
+            (GetKeyState(ParseKeyCode(key) ?? 0) & 0x8000) != 0;
         //========================================================
     }
 }

@@ -3,9 +3,9 @@ using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using System.Threading.Tasks;
+using System.Windows.Interop;
 using System.Collections.Generic;
 using Microsoft.Web.WebView2.Core;
-using on_screen_keylogger.Input;
 using on_screen_keylogger.Handlers;
 using on_screen_keylogger.UpdateCallers;
 
@@ -18,26 +18,27 @@ namespace on_screen_keylogger
     {
         //========================================================
         private readonly HashSet<string> _loadedKeyCodes = new HashSet<string>();
-        //
-        private InputHandler _inputHandler;
-        private UpdateCaller _updateCaller;
-        private WebMessageHandler _webMessageHandler;
         //--------------------------------------------------------
+        /// <summary>
+        /// The <see cref="WindowInteropHelper"/> for this window.
+        /// </summary>
+        public readonly WindowInteropHelper InteropHelper;
+
         /// <summary>
         /// The <see cref="InputHandler"/> used by this window.<br/>
         /// Override this to define your own <see cref="InputHandler"/>.
         /// </summary>
-        public InputHandler InptHandler => _inputHandler;
-        
+        public readonly InputHandler InptHandler;
+
         /// <summary>
         /// Returns the <see cref="UpdateCaller"/> used by this window.
         /// </summary>
-        public UpdateCaller UpdateCaller => _updateCaller;
+        public readonly UpdateCaller UpdateCaller;
 
         /// <summary>
         /// Handles web messages.
         /// </summary>
-        public WebMessageHandler WebMessageHandler => _webMessageHandler;
+        public readonly WebMessageHandler WebMessageHandler;
         //--------------------------------------------------------
         /// <summary>
         /// The currently selected UI layout name.
@@ -57,16 +58,22 @@ namespace on_screen_keylogger
         /// Internal layouts are layouts loaded from a string (data:text/html;).
         /// </summary>
         public bool IsCurrLayoutInternal => LastLoadedURI.StartsWith("data:text/html;");
+        //--------------------------------------------------------
+        /// <summary>
+        /// The last focused window (excluding this window).
+        /// </summary>
+        public IntPtr LastActiveWindow { get; private set; } = IntPtr.Zero;
         //========================================================
         public MainWindow()
         {
             //init ui
             InitializeComponent();
-            
-			//define variables
-            _inputHandler = new DefaultInputHandler();
-            _updateCaller = new DefaultUpdateCaller(this);
-            _webMessageHandler = new DefaultWebMessageHandler(this);
+
+            //define variables
+            InteropHelper = new WindowInteropHelper(this);
+            InptHandler = new DefaultInputHandler(this);
+            UpdateCaller = new DefaultUpdateCaller(this);
+            WebMessageHandler = new DefaultWebMessageHandler(this);
 			
 			//load layout
 			WebMessageHandler.Handle(Const.WebMsg_LoadLayout + " " + HtmlUILayoutName);
@@ -93,7 +100,11 @@ namespace on_screen_keylogger
                 webBrowser.Source = new Uri(file.FullName);
                 return true;
             }
-            catch { return false; }
+            catch
+            {
+                WebMessageHandler.Handle(Const.WebMsg_LoadLayout + " default");
+                return false;
+            }
         }
         //--------------------------------------------------------
         /// <summary>
@@ -105,7 +116,12 @@ namespace on_screen_keylogger
             {
                 //load and focus check
                 if (!webBrowser.IsLoaded || webBrowser.CoreWebView2 == null || IsFocused) return;
-                
+
+                //track last active window
+                IntPtr fw = Utils.GetForegroundWindow();
+                if ((int)fw != (int)InteropHelper.Handle)
+                    LastActiveWindow = fw;
+
                 //----- update html
                 //update counters
                 await ExecJS_ForEachQueryAsync(

@@ -99,7 +99,7 @@
 			<button keyCode="220" shift="|">\</button>
 			<button keyCode="13" w=90>Enter</button>
 			</br>
-			<button keyCode="16" w=54>Shift</button>
+			<button keyCode="16" w=54 onclick="chrome.webview.postMessage('OnScreenKeylogger: pressKey 20')">Shift</button>
 			<button keyCode="226">\</button>
 			<button keyCode="z">Z</button>
 			<button keyCode="x">X</button>
@@ -112,7 +112,7 @@
 			<button keyCode="190" shift="&gt;">.</button>
 			<button keyCode="191" shift="?">/</button>
 			<button keyCode="38">↑</button>
-			<button keyCode="16" w=105>Shift</button>
+			<button keyCode="16" w=105 onclick="chrome.webview.postMessage('OnScreenKeylogger: pressKey 20')">Shift</button>
 			</br>
 			<button keyCode="" onclick="openSettings()" onreleased="openSettings()" highlight>⚙</button>
 			<button keyCode="17">Ctrl</button>
@@ -146,8 +146,17 @@
 				i.appendChild(txt);
 			});
 
-			//disable tab focus on buttons
-			document.querySelectorAll("button[keyCode]").forEach(i => i.setAttribute("tabindex", -1));
+            //disable tab focus on buttons, and define click actions
+            document.querySelectorAll("button[keyCode]").forEach(i =>
+            {
+                i.setAttribute("tabindex", -1)
+                var keyCode = i.getAttribute("keyCode");
+                if (!(!keyCode || /^\s*$/.test(keyCode)) && !i.hasAttribute("onclick"))
+                {
+                    var js = "chrome.webview.postMessage(\"OnScreenKeylogger: pressKey " + keyCode + "\");";
+                    i.setAttribute("onclick", js);
+                }
+            });
 
 			//handle window re-sizing
 			function reScaleKeyboard()

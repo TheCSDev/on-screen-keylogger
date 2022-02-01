@@ -12,7 +12,6 @@ namespace on_screen_keylogger.UpdateCallers
     {
         //========================================================
         protected int? _updateFrequency = null;
-        //
         private readonly Thread _thread;
         //--------------------------------------------------------
         /// <summary>
@@ -35,13 +34,21 @@ namespace on_screen_keylogger.UpdateCallers
         /// How frequently is <see cref="OnUpdate()"/> gonna be called?
         /// </summary>
         public int UpdateFrequency => _updateFrequency ??= (1000 / UpdateTime);
+
+        /// <summary>
+        /// The <see cref="MainWindow"/> that this update caller belongs to.
+        /// </summary>
+        public readonly MainWindow Parent;
         //========================================================
-        public UpdateCaller()
+        public UpdateCaller(MainWindow parent)
         {
+            Parent = parent;
+
             _thread = new Thread(() =>
             {
                 while (true)
                 {
+                    //wait and update
                     Thread.Sleep(UpdateTime);
                     OnUpdate();
                 }

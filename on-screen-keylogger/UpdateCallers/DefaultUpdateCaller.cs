@@ -8,14 +8,9 @@ namespace on_screen_keylogger.UpdateCallers
     public sealed class DefaultUpdateCaller : UpdateCaller
     {
         //========================================================
-        /// <summary>
-        /// The window that should be updated on upate.
-        /// </summary>
-        public readonly MainWindow ParentWindow;
-        //========================================================
-        public DefaultUpdateCaller(MainWindow parent) => ParentWindow = parent;
+        public DefaultUpdateCaller(MainWindow parent) : base(parent) { }
         //--------------------------------------------------------
-        public override void OnUpdate() => ParentWindow?.UpdateHtmlUI();
+        public override void OnUpdate() => Parent?.UpdateHtmlUI();
         //========================================================
     }
 }
