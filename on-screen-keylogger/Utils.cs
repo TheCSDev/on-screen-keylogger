@@ -33,6 +33,9 @@ namespace on_screen_keylogger
             else if (val.CompareTo(max) > 0) return max;
             else return val;
         }
+        //--------------------------------------------------------
+        public static string TrimStartEnd(this string arg, int start, int end) =>
+            arg.Substring(start, arg.Length - (end + 1));
         //========================================================
     }
 }

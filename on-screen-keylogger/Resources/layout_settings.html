@@ -1,6 +1,7 @@
 <!--<!DOCTYPE html> Do not uncomment this, it is assigned automatically. -->
 <html>
 <head>
+    <title>Settings</title>
     <style>
         html {
             background-color: #333333;
@@ -38,12 +39,14 @@
         function UpdateAll()
         {
             var ctn = document.getElementById('in_ctn').value ?? 'default';
-            var tpu = document.getElementById('in_tpu').value ?? 'default';
+            var tpu = document.getElementById('in_tpu').value ?? 50;
+            var shm = document.getElementById('in_shm').checked;
             tpu = clamp(tpu, 25, 250);
             try { document.getElementById('in_tpu').value = tpu; } catch { }
 
             chrome?.webview?.postMessage("OnScreenKeylogger: set UILayoutName " + ctn);
             chrome?.webview?.postMessage("OnScreenKeylogger: set UpdateTimeMS " + tpu);
+            chrome?.webview?.postMessage("OnScreenKeylogger: set ShowMenu  "    + shm);
 
             EnableApply(false);
         }
@@ -68,6 +71,10 @@
                 <td>Time per update (ms):</td>
                 <td><input id="in_tpu" type="number" min=25 max=250 value=50></input></td>
             </tr>
+            <tr>
+                <td>Show menu:</td>
+                <td><input id="in_shm" type="checkbox"></input></td>
+            </tr>
         </table>
     </fieldset>
     </br>
@@ -86,6 +93,10 @@
         document.getElementById('in_tpu').value = OnScreenKeylogger.Settings.UpdateTimeMS;
         document.getElementById('in_tpu').addEventListener('input', () => EnableApply(true));
         document.getElementById('in_tpu').addEventListener('propertychange', () => EnableApply(true));
+
+        document.getElementById('in_shm').checked = OnScreenKeylogger.Settings.ShowMenu;
+        document.getElementById('in_shm').addEventListener('input', () => EnableApply(true));
+        document.getElementById('in_shm').addEventListener('propertychange', () => EnableApply(true));
     </script>
 </body>
 </html>

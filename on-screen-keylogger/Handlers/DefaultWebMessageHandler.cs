@@ -54,6 +54,10 @@ namespace on_screen_keylogger.Handlers
                     Parent.InptHandler.OSK_KeyPress(keyCode ?? 0);
                 }
 
+                //ReRegisterKeys
+                else if (message.ToLower().StartsWith(Const.WebMsg_ReRegisterKeys))
+                    Parent.UpdateKeyCodes();
+
                 //set (for security reasons, internal layouts only)
                 else if (message.ToLower().StartsWith(Const.WebMsg_Set + " ") &&
                         Parent.IsCurrLayoutInternal)
@@ -75,6 +79,11 @@ namespace on_screen_keylogger.Handlers
                         byte.TryParse(message, out num);
                         Parent.UpdateCaller.UpdateTime = num;
                     }
+                    else if (message.StartsWith(nameof(s.ShowMenu) + " "))
+                    {
+                        message = message.Substring(nameof(s.ShowMenu).Length + 1);
+                        Parent.ShowMenu = ParseBoolButBetter(message);
+                    }
                 }
             });
         }
@@ -83,21 +92,32 @@ namespace on_screen_keylogger.Handlers
         {
             //prepend settings data
             string uil = Parent.HtmlUILayoutName;
-            int utms = Parent.UpdateCaller.UpdateTime;
+            int   utms = Parent.UpdateCaller.UpdateTime;
+            bool   shm = Properties.Settings.Default.ShowMenu;
 
             string html =
+                //Append settings variables
                 "<!DOCTYPE html>\n" +
                 "<script>" +
                 "OnScreenKeylogger = {};" +
                 "OnScreenKeylogger.Settings = {};" +
                 "OnScreenKeylogger.Settings.UILayoutName = '"+uil+"';" +
                 "OnScreenKeylogger.Settings.UpdateTimeMS = "+utms+";" +
+                "OnScreenKeylogger.Settings.ShowMenu = " + shm.ToString().ToLower() + ";" +
                 "</script>" +
+
+                //Then the rest of the settings html
                 Properties.Resources.layout_settings;
 
             //load page
             Parent.webBrowser.NavigateToString(html);
         }
+        //========================================================
+        /// <summary>
+        /// A better version for <see cref="bool.Parse(string)"/>
+        /// </summary>
+        private bool ParseBoolButBetter(string input) =>
+            input.Trim().ToLower().Equals("true");
         //========================================================
     }
 }

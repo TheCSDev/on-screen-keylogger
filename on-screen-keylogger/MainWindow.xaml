@@ -15,9 +15,29 @@
         Closing="Window_Closing"
         Keyboard.KeyUp="Window_KeyUp">
     <Grid x:Name="contentPane" Background="#FF323232">
-        <wv2:WebView2 x:Name="webBrowser"
+        <!-- GRID ROW AND COLUMN DEFINITIONS -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- MENU -->
+        <Menu x:Name="menu" Grid.Row="0" Grid.Column="0" FontFamily="Cascadia Mono"
+              HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Panel.ZIndex="1">
+            <MenuItem Header="File">
+                <MenuItem x:Name="menu_fOpn" Header="Open           (Ctrl+N)" Click="menu_fOpn_Click"></MenuItem>
+                <MenuItem x:Name="menu_fSet" Header="Settings       (Ctrl+,)" Click="menu_fSet_Click"></MenuItem>
+                <MenuItem x:Name="menu_fSHM" Header="Show/Hide menu (Ctrl+Shift+B)" Click="menu_fSHM_Click"></MenuItem>
+                <MenuItem x:Name="menu_fExt" Header="Exit" Click="menu_fExt_Click"></MenuItem>
+            </MenuItem>
+        </Menu>
+        
+        <!-- WEBVIEW -->
+        <wv2:WebView2 Grid.Row="1" Grid.Column="0" x:Name="webBrowser"
                       Source="https://www.example.com"
-                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                       NavigationStarting="webBrowser_NavigationStarting"
                       NavigationCompleted="webBrowser_NavigationCompleted"
                       CoreWebView2InitializationCompleted="webBrowser_CoreWebView2InitializationCompleted"

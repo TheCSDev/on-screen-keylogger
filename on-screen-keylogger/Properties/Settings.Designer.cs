@@ -46,5 +46,17 @@ namespace on_screen_keylogger.Properties {
                 this["UpdateTimeMS"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ShowMenu {
+            get {
+                return ((bool)(this["ShowMenu"]));
+            }
+            set {
+                this["ShowMenu"] = value;
+            }
+        }
     }
 }

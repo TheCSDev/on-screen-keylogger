@@ -70,23 +70,14 @@ namespace on_screen_keylogger.Handlers
             //null check
             if (keyCode < 1) return;
 
-            //check if a key is already being pressed
-            if (AKeyIsPressing) return;
-            AKeyIsPressing = true;
-
             //redirect focus onto the last focused window
             IntPtr hWnd = Parent.LastActiveWindow;
             if (hWnd == null || hWnd == IntPtr.Zero) return;
-
             Focus(hWnd);
-            Thread.Sleep(25); //wait a bit for the focus to take place
 
             //press the key
             try { inputSimulator.Keyboard.KeyPress((VirtualKeyCode)keyCode); }
             catch { }
-
-            //reset AKeyIsPressing
-            AKeyIsPressing = false;
         }
         //========================================================
         private void Focus(IntPtr hWnd) { Utils.SetForegroundWindow(hWnd); Utils.SetFocus(hWnd); }

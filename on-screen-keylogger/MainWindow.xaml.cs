@@ -1,12 +1,15 @@
 ﻿using System;
 using System.IO;
 using System.Windows;
+using System.Reflection;
 using System.Windows.Input;
 using System.Threading.Tasks;
 using System.Windows.Interop;
 using System.Collections.Generic;
+using Microsoft.VisualBasic;
 using Microsoft.Web.WebView2.Core;
 using on_screen_keylogger.Handlers;
+using on_screen_keylogger.Properties;
 using on_screen_keylogger.UpdateCallers;
 
 namespace on_screen_keylogger
@@ -45,8 +48,20 @@ namespace on_screen_keylogger
         /// </summary>
         public string HtmlUILayoutName
         {
-            get => this[Const.Setting_UILayoutName].ToString() ?? "default";
-            set { this[Const.Setting_UILayoutName] = value; LoadHtmlLayout(); }
+            get => Settings.Default.UILayoutName.ToString() ?? "default";
+            set { Settings.Default.UILayoutName = value; LoadHtmlLayout(); }
+        }
+
+        public bool ShowMenu
+        {
+            get => Settings.Default.ShowMenu;
+            set
+            {
+                Settings.Default.ShowMenu = value;
+                if (value == false)
+                    contentPane.RowDefinitions[0].Height = new GridLength(0, GridUnitType.Pixel);
+                else contentPane.RowDefinitions[0].Height = GridLength.Auto;
+            }
         }
 
         /// <summary>
@@ -74,13 +89,30 @@ namespace on_screen_keylogger
             InptHandler = new DefaultInputHandler(this);
             UpdateCaller = new DefaultUpdateCaller(this);
             WebMessageHandler = new DefaultWebMessageHandler(this);
+
+            //apply loaded setting(s)
+            ShowMenu = Settings.Default.ShowMenu; //this updates the UI
 			
 			//load layout
-			WebMessageHandler.Handle(Const.WebMsg_LoadLayout + " " + HtmlUILayoutName);
+			WebMessageHandler.Handle(Const.WebMsg_LoadLayout + " " + App.StartupLayout);
 
             //update ui
             UpdateHtmlUI();
         }
+        //--------------------------------------------------------
+        public void ShowOpenDialog()
+        {
+            Topmost = false;
+            string input = Interaction.InputBox(
+                "Please type in the name of the layout you wish to open.",
+                "Open layout",
+                "default");
+            Topmost = true;
+            string exe = Assembly.GetEntryAssembly().Location;
+            System.Diagnostics.Process.Start(exe, input);
+        }
+        //
+        public void OpenSettings() => WebMessageHandler.Handle(Const.WebMsg_LoadLayout + " Settings");
         //--------------------------------------------------------
         /// <summary>
         /// Loads an HTML template layout for the UI.
@@ -121,6 +153,10 @@ namespace on_screen_keylogger
                 IntPtr fw = Utils.GetForegroundWindow();
                 if ((int)fw != (int)InteropHelper.Handle)
                     LastActiveWindow = fw;
+
+                //update window title
+                Title = Assembly.GetExecutingAssembly().GetName().Name + " - " +
+                        (await ExecJSAsync("document.title;") ?? "\"UnNamed Layout\"").TrimStartEnd(1,1);
 
                 //----- update html
                 //update counters
@@ -169,6 +205,9 @@ namespace on_screen_keylogger
             });
         }
         //--------------------------------------------------------
+        public void UpdateKeyCodes() =>
+            Dispatcher.InvokeAsync(async () => await UpdateKeyCodesAsync());
+
         /// <summary>
         /// Retrieves the set of keyCode-s used by the currently
         /// loaded webpage in the <see cref="webBrowser"/>.<br/>
@@ -197,7 +236,7 @@ namespace on_screen_keylogger
             Task task = ExecJSAsync(js).ContinueWith((arg) =>
             {
                 //gotta love the fast that JS adds quotes at the start and end /j
-                string result = arg.Result.Replace("\"", "");
+                string result = arg.Result.TrimStartEnd(1,1);
                 Console.WriteLine("[UpdateKeyCodesAsync] Registering new keyCodes: " + result);
                 _loadedKeyCodes.Clear();
                 _loadedKeyCodes.UnionWith(result.Split(','));
@@ -234,7 +273,7 @@ namespace on_screen_keylogger
             webBrowser?.CoreWebView2?.CookieManager?.DeleteAllCookies();
 
             //save properties
-            Properties.Settings.Default.Save();
+            Settings.Default.Save();
         }
         //--------------------------------------------------------
         /// <summary>
@@ -242,10 +281,21 @@ namespace on_screen_keylogger
         /// </summary>
         private void Window_KeyUp(object sender, KeyEventArgs e)
         {
+            //help
             if (e.Key == Key.F1)
                 System.Diagnostics.Process.Start("https://github.com/TheCSDev/on-screen-keylogger/wiki");
+
+            //settings
             else if (e.Key == Key.OemComma && Keyboard.IsKeyDown(Key.LeftCtrl))
-                WebMessageHandler.Handle(Const.WebMsg_LoadLayout + " Settings");
+                OpenSettings();
+
+            //toggle menu
+            else if (e.Key == Key.B && Keyboard.IsKeyDown(Key.LeftCtrl) && Keyboard.IsKeyDown(Key.LeftShift))
+                ShowMenu = !ShowMenu;
+
+            //show open dialog
+            else if (e.Key == Key.N && Keyboard.IsKeyDown(Key.LeftCtrl))
+                ShowOpenDialog();
         }
         //--------------------------------------------------------
         /// <summary>
@@ -295,31 +345,11 @@ namespace on_screen_keylogger
             //handle the message
             WebMessageHandler.Handle(message);
         }
-        //========================================================
-        /// <summary>
-        /// Gets or sets the application's user settings.
-        /// </summary>
-        /// <param name="setting">The name of the setting.</param>
-        public object this[string setting]
-        {
-            get => GetSetting(setting);
-            set => SetSetting(setting, value);
-        }
         //--------------------------------------------------------
-        public static T GetSetting<T>(string setting)
-        {
-            try { return (T)Properties.Settings.Default[setting]; }
-            catch { return default; }
-        }
-        //
-        public static object GetSetting(string setting)
-        {
-            try { return Properties.Settings.Default[setting]; }
-            catch { return null; }
-        }
-        //--------------------------------------------------------
-        public static void SetSetting(string setting, object value) =>
-            Properties.Settings.Default[setting] = value;
+        private void menu_fOpn_Click(object sender, RoutedEventArgs e) => ShowOpenDialog();
+        private void menu_fSHM_Click(object sender, RoutedEventArgs e) => ShowMenu = !ShowMenu;
+        private void menu_fSet_Click(object sender, RoutedEventArgs e) => OpenSettings();
+        private void menu_fExt_Click(object sender, RoutedEventArgs e) => Close();
         //========================================================
     }
 }

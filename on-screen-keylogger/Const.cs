@@ -1,5 +1,4 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace on_screen_keylogger
@@ -35,19 +34,8 @@ namespace on_screen_keylogger
         public static string WebMsg_Reload => "reload".ToLower();
         public static string WebMsg_GoBack => "GoBack".ToLower();
         public static string WebMsg_PressKey => "PressKey".ToLower();
+        public static string WebMsg_ReRegisterKeys => "ReRegisterKeys".ToLower();
         public static string WebMsg_Set => "set".ToLower();
-        //--------------------------------------------------------
-        /// <summary>
-        /// This <see cref="Properties.Settings"/> setting tells the
-        /// application what HTML file to use as the UI layout.
-        /// </summary>
-        public const string Setting_UILayoutName = "UILayoutName";
-
-        /// <summary>
-        /// This <see cref="Properties.Settings"/> setting tells the
-        /// application how long to wait before calling another update.
-        /// </summary>
-        public const string Setting_UpdateTimeMS = "UpdateTimeMS";
         //========================================================
         /// <summary>
         /// This HTML attribute is assigned to all HTML elements

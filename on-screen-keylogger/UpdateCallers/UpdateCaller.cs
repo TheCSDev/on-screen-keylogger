@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using on_screen_keylogger.Properties;
 
 namespace on_screen_keylogger.UpdateCallers
 {
@@ -22,10 +23,10 @@ namespace on_screen_keylogger.UpdateCallers
         /// </summary>
         public byte UpdateTime
         {
-            get => (byte)MainWindow.GetSetting<int>(Const.Setting_UpdateTimeMS).Clamp(25, 250);
+            get => (byte)Settings.Default.UpdateTimeMS.Clamp(25, 250);
             set
             {
-                MainWindow.SetSetting(Const.Setting_UpdateTimeMS, (int)value);
+                Settings.Default.UpdateTimeMS = value;
                 _updateFrequency = null;
             }
         }
