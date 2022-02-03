@@ -16,6 +16,7 @@ namespace on_screen_keylogger.Handlers
             string uil = Parent.HtmlUILayoutName;
             int   utms = Parent.UpdateCaller.UpdateTime;
             bool   shm = Properties.Settings.Default.ShowMenu;
+            bool   lrr = Properties.Settings.Default.LimitResizeRequests;
 
             string html =
                 //Append settings variables
@@ -23,9 +24,10 @@ namespace on_screen_keylogger.Handlers
                 "<script>" +
                 "OnScreenKeylogger = {};" +
                 "OnScreenKeylogger.Settings = {};" +
-                "OnScreenKeylogger.Settings.UILayoutName = \""+ uil +"\";" +
-                "OnScreenKeylogger.Settings.UpdateTimeMS = "  + utms +";" +
-                "OnScreenKeylogger.Settings.ShowMenu     = "  + shm.ToString().ToLower() + ";" +
+                "OnScreenKeylogger.Settings.UILayoutName        = \""+ uil +"\";" +
+                "OnScreenKeylogger.Settings.UpdateTimeMS        = "  + utms +";" +
+                "OnScreenKeylogger.Settings.ShowMenu            = "  + shm.ToString().ToLower() + ";" +
+                "OnScreenKeylogger.Settings.LimitResizeRequests = "  + lrr.ToString().ToLower() + ";" +
                 "</script>" +
 
                 //Then the rest of the settings html
@@ -110,10 +112,12 @@ namespace on_screen_keylogger.Handlers
                     catch { }
 
                 //setWindowSize
-                else if (message.ToLower().StartsWith(Const.WebMsg_SetWindowSize + " "))
+                else if (message.ToLower().StartsWith(Const.WebMsg_SetWindowSize + " ") && !ResizeCalled)
                     try
                     {
-                        //substring, get cursor pos
+                        ResizeCalled = true;
+
+                        //substring, get width and height
                         message = message.Substring(Const.WebMsg_SetWindowSize.Length + 1);
 
                         //get xy and pos info
@@ -151,6 +155,11 @@ namespace on_screen_keylogger.Handlers
                     {
                         message = message.Substring(nameof(s.ShowMenu).Length + 1);
                         Parent.ShowMenu = ParseBoolButBetter(message);
+                    }
+                    else if (message.StartsWith(nameof(s.LimitResizeRequests) + " "))
+                    {
+                        message = message.Substring(nameof(s.LimitResizeRequests).Length + 1);
+                        s.LimitResizeRequests = ParseBoolButBetter(message);
                     }
                 }
             });
