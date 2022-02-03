@@ -112,9 +112,12 @@ namespace on_screen_keylogger.Handlers
                     catch { }
 
                 //setWindowSize
-                else if (message.ToLower().StartsWith(Const.WebMsg_SetWindowSize + " ") && !ResizeCalled)
+                else if (message.ToLower().StartsWith(Const.WebMsg_SetWindowSize + " "))
                     try
                     {
+                        //track resize called
+                        if (Properties.Settings.Default.LimitResizeRequests && ResizeCalled)
+                            return;
                         ResizeCalled = true;
 
                         //substring, get width and height
