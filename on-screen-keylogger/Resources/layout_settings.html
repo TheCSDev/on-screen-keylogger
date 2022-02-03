@@ -41,13 +41,15 @@
             var ctn = document.getElementById('in_ctn').value ?? 'default';
             var tpu = document.getElementById('in_tpu').value ?? 50;
             var shm = document.getElementById('in_shm').checked;
+            var lrr = document.getElementById('in_lrr').checked;
 
             tpu = clamp(tpu, 25, 250);
             try { document.getElementById('in_tpu').value = tpu; } catch { }
 
-            chrome?.webview?.postMessage("OnScreenKeylogger: set UILayoutName " + ctn);
-            chrome?.webview?.postMessage("OnScreenKeylogger: set UpdateTimeMS " + tpu);
-            chrome?.webview?.postMessage("OnScreenKeylogger: set ShowMenu "     + shm);
+            chrome?.webview?.postMessage("OnScreenKeylogger: set UILayoutName "        + ctn);
+            chrome?.webview?.postMessage("OnScreenKeylogger: set UpdateTimeMS "        + tpu);
+            chrome?.webview?.postMessage("OnScreenKeylogger: set ShowMenu "            + shm);
+            chrome?.webview?.postMessage("OnScreenKeylogger: set LimitResizeRequests " + lrr);
 
             EnableApply(false);
         }
@@ -76,6 +78,10 @@
                 <td>Show menu:</td>
                 <td><input id="in_shm" type="checkbox"></input></td>
             </tr>
+            <tr>
+                <td>Limit resize requests:</td>
+                <td><input id="in_lrr" type="checkbox"></input></td>
+            </tr>
         </table>
     </fieldset>
     </br>
@@ -98,6 +104,10 @@
         document.getElementById('in_shm').checked = OnScreenKeylogger.Settings.ShowMenu;
         document.getElementById('in_shm').addEventListener('input', () => EnableApply(true));
         document.getElementById('in_shm').addEventListener('propertychange', () => EnableApply(true));
+
+        document.getElementById('in_lrr').checked = OnScreenKeylogger.Settings.LimitResizeRequests;
+        document.getElementById('in_lrr').addEventListener('input', () => EnableApply(true));
+        document.getElementById('in_lrr').addEventListener('propertychange', () => EnableApply(true));
     </script>
 </body>
 </html>

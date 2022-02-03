@@ -58,5 +58,17 @@ namespace on_screen_keylogger.Properties {
                 this["ShowMenu"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool LimitResizeRequests {
+            get {
+                return ((bool)(this["LimitResizeRequests"]));
+            }
+            set {
+                this["LimitResizeRequests"] = value;
+            }
+        }
     }
 }
