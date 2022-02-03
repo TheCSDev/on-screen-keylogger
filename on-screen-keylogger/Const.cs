@@ -35,6 +35,8 @@ namespace on_screen_keylogger
         public static string WebMsg_GoBack => "GoBack".ToLower();
         public static string WebMsg_PressKey => "PressKey".ToLower();
         public static string WebMsg_ReRegisterKeys => "ReRegisterKeys".ToLower();
+        public static string WebMsg_MouseMove => "MouseMove".ToLower();
+        public static string WebMsg_SetWindowSize => "SetWindowSize".ToLower();
         public static string WebMsg_Set => "set".ToLower();
         //========================================================
         /// <summary>

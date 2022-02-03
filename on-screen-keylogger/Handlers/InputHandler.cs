@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Text;
+using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 using WindowsInput;
 using WindowsInput.Native;
 
@@ -76,7 +78,28 @@ namespace on_screen_keylogger.Handlers
             Focus(hWnd);
 
             //press the key
-            try { inputSimulator.Keyboard.KeyPress((VirtualKeyCode)keyCode); }
+            try
+            {
+                Point cursor = Cursor.Position;
+                switch (keyCode)
+                {
+                    case 1:
+                        Utils.mouse_event(Utils.MouseEventF.MOUSEEVENTF_LEFTDOWN, cursor.X, cursor.Y, 0, 0);
+                        Utils.mouse_event(Utils.MouseEventF.MOUSEEVENTF_LEFTUP, cursor.X, cursor.Y, 0, 0);
+                        break;
+                    case 2:
+                        Utils.mouse_event(Utils.MouseEventF.MOUSEEVENTF_RIGHTDOWN, cursor.X, cursor.Y, 0, 0);
+                        Utils.mouse_event(Utils.MouseEventF.MOUSEEVENTF_RIGHTUP, cursor.X, cursor.Y, 0, 0);
+                        break;
+                    case 4:
+                        Utils.mouse_event(Utils.MouseEventF.MOUSEEVENTF_MIDDLEDOWN, cursor.X, cursor.Y, 0, 0);
+                        Utils.mouse_event(Utils.MouseEventF.MOUSEEVENTF_MIDDLEUP, cursor.X, cursor.Y, 0, 0);
+                        break;
+                    default:
+                        inputSimulator.Keyboard.KeyPress((VirtualKeyCode)keyCode);
+                        break;
+                }
+            }
             catch { }
         }
         //========================================================

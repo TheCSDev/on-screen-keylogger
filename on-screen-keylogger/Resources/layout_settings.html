@@ -41,12 +41,13 @@
             var ctn = document.getElementById('in_ctn').value ?? 'default';
             var tpu = document.getElementById('in_tpu').value ?? 50;
             var shm = document.getElementById('in_shm').checked;
+
             tpu = clamp(tpu, 25, 250);
             try { document.getElementById('in_tpu').value = tpu; } catch { }
 
             chrome?.webview?.postMessage("OnScreenKeylogger: set UILayoutName " + ctn);
             chrome?.webview?.postMessage("OnScreenKeylogger: set UpdateTimeMS " + tpu);
-            chrome?.webview?.postMessage("OnScreenKeylogger: set ShowMenu  "    + shm);
+            chrome?.webview?.postMessage("OnScreenKeylogger: set ShowMenu "     + shm);
 
             EnableApply(false);
         }

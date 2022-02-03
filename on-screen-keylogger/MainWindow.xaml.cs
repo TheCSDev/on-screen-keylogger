@@ -6,7 +6,6 @@ using System.Windows.Input;
 using System.Threading.Tasks;
 using System.Windows.Interop;
 using System.Collections.Generic;
-using Microsoft.VisualBasic;
 using Microsoft.Web.WebView2.Core;
 using on_screen_keylogger.Handlers;
 using on_screen_keylogger.Properties;
@@ -97,19 +96,43 @@ namespace on_screen_keylogger
 			WebMessageHandler.Handle(Const.WebMsg_LoadLayout + " " + App.StartupLayout);
 
             //update ui
-            UpdateHtmlUI();
+            //UpdateHtmlUI();
         }
         //--------------------------------------------------------
         public void ShowOpenDialog()
         {
-            Topmost = false;
-            string input = Interaction.InputBox(
-                "Please type in the name of the layout you wish to open.",
-                "Open layout",
-                "default");
-            Topmost = true;
-            string exe = Assembly.GetEntryAssembly().Location;
-            System.Diagnostics.Process.Start(exe, input);
+            Dispatcher.InvokeAsync(async () =>
+            {
+                string js =
+                    "(function(){\n" +
+                    "var input = window.prompt('Open a layout in this window:','default');\n" +
+                    "if(input === null) { return; }\n" +
+                    "chrome.webview.postMessage('OnScreenKeylogger: loadlayout ' + input);\n" +
+                    "})();";
+                await ExecJSAsync(js);
+            });
+        }
+        //
+        public void ShowOpenNewDialog()
+        {
+            Dispatcher.InvokeAsync(async () =>
+            {
+                //exec js
+                string js =
+                    "(function(){\n" +
+                    "var input = window.prompt('Open a layout in a new window:','default');\n" +
+                    "if(input === null) { return null; }\n" +
+                    "return input;\n" +
+                    "})();";
+
+                //get input
+                string input = await ExecJSAsync(js);
+                if (input == null) return;
+                input = input.SubstrStartEnd(1,1);
+
+                //exec exe with input
+                System.Diagnostics.Process.Start(Assembly.GetEntryAssembly().Location, input);
+            });
         }
         //
         public void OpenSettings() => WebMessageHandler.Handle(Const.WebMsg_LoadLayout + " Settings");
@@ -147,7 +170,7 @@ namespace on_screen_keylogger
             Dispatcher.InvokeAsync(async () =>
             {
                 //load and focus check
-                if (!webBrowser.IsLoaded || webBrowser.CoreWebView2 == null || IsFocused) return;
+                if (!webBrowser.IsLoaded || webBrowser.CoreWebView2 == null) return;
 
                 //track last active window
                 IntPtr fw = Utils.GetForegroundWindow();
@@ -156,7 +179,7 @@ namespace on_screen_keylogger
 
                 //update window title
                 Title = Assembly.GetExecutingAssembly().GetName().Name + " - " +
-                        (await ExecJSAsync("document.title;") ?? "\"UnNamed Layout\"").TrimStartEnd(1,1);
+                        (await ExecJSAsync("document.title;") ?? "\"UnNamed Layout\"").SubstrStartEnd(1,1);
 
                 //----- update html
                 //update counters
@@ -236,7 +259,7 @@ namespace on_screen_keylogger
             Task task = ExecJSAsync(js).ContinueWith((arg) =>
             {
                 //gotta love the fast that JS adds quotes at the start and end /j
-                string result = arg.Result.TrimStartEnd(1,1);
+                string result = arg.Result.SubstrStartEnd(1,1);
                 Console.WriteLine("[UpdateKeyCodesAsync] Registering new keyCodes: " + result);
                 _loadedKeyCodes.Clear();
                 _loadedKeyCodes.UnionWith(result.Split(','));
@@ -262,6 +285,13 @@ namespace on_screen_keylogger
         public Task<string> ExecJS_ForEachQueryAsync(string selector, string iAction) =>
             ExecJSAsync("document.querySelectorAll(\"" + selector + "\")" +
                 ".forEach(i => { " + iAction + " });");
+        //--------------------------------------------------------
+        public async Task WaitForCoreWebViewAsync()
+        {
+            //wait for core web view
+            if (!webBrowser.IsLoaded || webBrowser.CoreWebView2 == null)
+                await Task.Delay(100);
+        }
         //========================================================
         /// <summary>
         /// Aborts the updater thread upon closing, and clears all data.
@@ -295,7 +325,10 @@ namespace on_screen_keylogger
 
             //show open dialog
             else if (e.Key == Key.N && Keyboard.IsKeyDown(Key.LeftCtrl))
-                ShowOpenDialog();
+            {
+                if (Keyboard.IsKeyDown(Key.LeftShift)) ShowOpenNewDialog();
+                else ShowOpenDialog();
+            }
         }
         //--------------------------------------------------------
         /// <summary>
@@ -347,6 +380,7 @@ namespace on_screen_keylogger
         }
         //--------------------------------------------------------
         private void menu_fOpn_Click(object sender, RoutedEventArgs e) => ShowOpenDialog();
+        private void menu_fONw_Click(object sender, RoutedEventArgs e) => ShowOpenNewDialog();
         private void menu_fSHM_Click(object sender, RoutedEventArgs e) => ShowMenu = !ShowMenu;
         private void menu_fSet_Click(object sender, RoutedEventArgs e) => OpenSettings();
         private void menu_fExt_Click(object sender, RoutedEventArgs e) => Close();

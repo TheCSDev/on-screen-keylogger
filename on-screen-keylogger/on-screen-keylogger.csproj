@@ -63,6 +63,7 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -87,6 +88,7 @@
     </ApplicationDefinition>
     <Compile Include="Const.cs" />
     <Compile Include="Handlers\DefaultWebMessageHandler.cs" />
+    <Compile Include="Handlers\AppUpdateHandler.cs" />
     <Compile Include="Handlers\WebMessageHandler.cs" />
     <Compile Include="UpdateCallers\DefaultUpdateCaller.cs" />
     <Compile Include="UpdateCallers\UpdateCaller.cs" />
