@@ -163,13 +163,6 @@ namespace on_screen_keylogger
         }
         //--------------------------------------------------------
         /// <summary>
-        /// Keeps track of the last time UpdateHtmlUI was called.
-        /// This will be used to make sure the last one is finished
-        /// before starting another one.
-        /// </summary>
-        private Task<string> LastUpdateTask = null;
-
-        /// <summary>
         /// Updates all of the UI elements, their texts, and colors.
         /// </summary>
         public void UpdateHtmlUI()
@@ -178,7 +171,6 @@ namespace on_screen_keylogger
             {
                 //load and focus check
                 if (!webBrowser.IsLoaded || webBrowser.CoreWebView2 == null) return;
-                if (LastUpdateTask != null && !LastUpdateTask.IsCompleted) return;
 
                 //track last active window
                 IntPtr fw = Utils.GetForegroundWindow();
@@ -186,9 +178,8 @@ namespace on_screen_keylogger
                     LastActiveWindow = fw;
 
                 //update window title
-                LastUpdateTask = ExecJSAsync("document.title;");
                 Title = Assembly.GetExecutingAssembly().GetName().Name + " - " +
-                        (await LastUpdateTask ?? "\"UnNamed Layout\"").SubstrStartEnd(1,1);
+                        (await ExecJSAsync("document.title;") ?? "\"UnNamed Layout\"").SubstrStartEnd(1,1);
 
                 //----- update html
                 //update counters
@@ -362,13 +353,6 @@ namespace on_screen_keylogger
 
             //cancel if not file or data url
             e.Cancel = !new Uri(e.Uri).IsFile && !IsCurrLayoutInternal;
-            if (e.Cancel) return;
-
-            //reset the resize flag
-            WebMessageHandler.ResizeCalled = false;
-
-            //clear cookies for security reasons
-            webBrowser.CoreWebView2?.CookieManager.DeleteAllCookies();
         }
         //--------------------------------------------------------
         /// <summary>
