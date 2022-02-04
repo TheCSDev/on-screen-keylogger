@@ -17,12 +17,16 @@ namespace on_screen_keylogger
         /// <summary>
         /// The startup layout.
         /// </summary>
-        public static string StartupLayout { get; private set; } = Settings.Default.UILayoutName;
+        public static string StartupLayout { get; private set; } = "default";
         //========================================================
         protected override void OnStartup(StartupEventArgs e)
         {
             StartupArgs = e.Args;
-            StartupLayout = string.Join(" ", StartupArgs); //may likely change
+
+            string layout = string.Join(" ", StartupArgs);
+            if (string.IsNullOrWhiteSpace(layout)) layout = Settings.Default.UILayoutName;
+            
+            StartupLayout = layout; //may likely change
             base.OnStartup(e);
         }
         //========================================================
